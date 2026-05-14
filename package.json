@@ -1,0 +1,8 @@
+{
+    "name": "ci-practice",
+    "scripts": {
+      "test": "node test.js",
+      "lint": "echo 'linting...'",
+      "build": "echo 'building...'"
+    }
+  }
