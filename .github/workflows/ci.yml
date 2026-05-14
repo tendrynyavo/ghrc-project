@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: npm start
+      - run: npm start &
       - run: npm test
 
   build-and-push:
