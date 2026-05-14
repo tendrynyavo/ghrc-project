@@ -8,27 +8,60 @@ on:                        # WHEN does this run?
   pull_request:            # Also on pull requests
     branches: [main]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  build-and-test:          # Job name (you choose this)
-    runs-on: ubuntu-latest # Which OS to use (a fresh VM each time)
 
+  test:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4      # Built-in action: clones your repo
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - run: npm install
+      - run: npm test
 
-      - name: Install dependencies
-        run: npm install               # Plain shell command
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test                           # Only runs if tests pass
+    if: github.ref == 'refs/heads/main'  # Only on main branch
 
-      # - name: Run linter
-      #   run: npm run lint
+    permissions:
+      contents: read
+      packages: write                    # Required to push to GHCR
 
-      - name: Run tests
-        run: npm test
+    steps:
+    
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # - name: Build
-      #   run: npm run build
+      # Log in to GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}  # Auto-provided, no setup needed!
+
+      # Extract metadata for image tags (latest, git SHA, branch name)
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-          # e.g. sha-abc1234
+            type=raw,value=latest         # always tag as latest too
+
+      # Build the image and push it to GHCR
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha            # Use GitHub Actions cache for layers
+          cache-to: type=gha,mode=max
