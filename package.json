@@ -3,6 +3,7 @@
     "scripts": {
       "test": "node test.js",
       "lint": "echo 'linting...'",
-      "build": "echo 'building...'"
+      "build": "echo 'building...'",
+      "start": "node server.js"
     }
   }

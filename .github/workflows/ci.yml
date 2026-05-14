@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: npm install
+      - run: npm start
       - run: npm test
 
   build-and-push:
@@ -34,7 +34,7 @@ jobs:
       packages: write                    # Required to push to GHCR
 
     steps:
-    
+
       - name: Checkout code
         uses: actions/checkout@v4
 
